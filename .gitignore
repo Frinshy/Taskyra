@@ -48,3 +48,4 @@ bin/
 /config/config.json
 /config/tasks.json
 /config/
+/.idea/
