@@ -1,9 +1,9 @@
 package utils
 
-import commands.impl.Task
-import commands.impl.TaskManager
-import commands.impl.TaskState
 import config.MessageHelper
+import de.frinshy.commands.impl.Task
+import de.frinshy.commands.impl.TaskManager
+import de.frinshy.commands.impl.TaskState
 import de.frinshy.config.BotConfig
 import de.frinshy.utils.updateChannelSummary
 import dev.kord.common.entity.ButtonStyle
@@ -11,6 +11,8 @@ import dev.kord.common.entity.TextInputStyle
 import dev.kord.core.behavior.interaction.modal
 import dev.kord.core.behavior.interaction.respondEphemeral
 import dev.kord.core.event.interaction.ComponentInteractionCreateEvent
+import dev.kord.rest.builder.component.SelectOptionBuilder
+import dev.kord.rest.builder.message.actionRow
 
 class StartTaskTaskButton : TaskButton(
     type = ButtonType.START_TASK,
@@ -158,6 +160,32 @@ class EditTaskButton : TaskButton(
                     this.required = true
                 }
             }
+        }
+    }
+}
+
+class ChangePriorityTaskButton : TaskButton(
+    type = ButtonType.CHANGE_PRIORITY,
+    label = "Priority",
+    style = ButtonStyle.Secondary
+) {
+    override suspend fun handle(task: Task, event: ComponentInteractionCreateEvent) {
+        try {
+            event.interaction.respondEphemeral {
+                content = "Choose a new priority for task \"${task.title}\":"
+                actionRow {
+                    stringSelect("priority-select-${task.id}") {
+                        placeholder = "Select priority (current: ${task.priority.name.lowercase()})"
+                        options = mutableListOf(
+                            SelectOptionBuilder("🔴 High", "high"),
+                            SelectOptionBuilder("🟡 Medium", "medium"),
+                            SelectOptionBuilder("🟢 Low", "low")
+                        )
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            event.interaction.respondEphemeral { content = "❌ Failed to show priority selector: ${e.message}" }
         }
     }
 }

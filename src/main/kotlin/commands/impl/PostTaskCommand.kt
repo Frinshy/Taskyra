@@ -1,8 +1,9 @@
 package de.frinshy.commands.impl
 
-import commands.impl.Task
-import commands.impl.TaskManager
-import commands.impl.TaskState
+import de.frinshy.commands.impl.Task
+import de.frinshy.commands.impl.TaskManager
+import de.frinshy.commands.impl.TaskState
+import de.frinshy.commands.impl.Priority
 import de.frinshy.commands.Command
 import de.frinshy.commands.SlashCommand
 import de.frinshy.config.BotConfig
@@ -13,7 +14,6 @@ import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.event.interaction.ChatInputCommandInteractionCreateEvent
 import dev.kord.rest.builder.interaction.ChatInputCreateBuilder
 import dev.kord.rest.builder.interaction.string
-import kotlinx.datetime.Clock
 
 @SlashCommand(name = "posttask", description = "Post a new task to the pending tasks channel")
 class PostTaskCommand : Command {
@@ -26,13 +26,19 @@ class PostTaskCommand : Command {
             string("description", "The detailed task description") {
                 required = false
             }
+            string("priority", "Optional priority: low, medium, or high") {
+                required = false
+                choice("Low", "low")
+                choice("Medium", "medium")
+                choice("High", "high")
+            }
         }
     }
 
     override suspend fun execute(event: ChatInputCommandInteractionCreateEvent) {
         val interaction = event.interaction
 
-        println("🔄 PostTaskCommand.execute() called - User: ${interaction.user.id}, Command: ${interaction.invokedCommandName}")
+        println("🔄 PostTaskCommand.execute() called - User: ${'$'}{interaction.user.id}, Command: ${'$'}{interaction.invokedCommandName}")
 
         val deferredResponse = interaction.deferEphemeralResponse()
         val guildId = interaction.data.guildId.value?.toString() ?: return
@@ -63,6 +69,14 @@ class PostTaskCommand : Command {
         val descriptionOption = interaction.command.options["description"]
         val descriptionText = descriptionOption?.value?.toString()?.trim()
 
+        val priorityOption = interaction.command.options["priority"]
+        val priorityText = priorityOption?.value?.toString()?.trim()?.lowercase()
+        val priorityValue = when (priorityText) {
+            "low" -> Priority.LOW
+            "high" -> Priority.HIGH
+            else -> Priority.MEDIUM
+        }
+
         try {
             val channel = interaction.kord.getChannelOf<TextChannel>(Snowflake(pendingChannelId))
             if (channel == null) {
@@ -72,7 +86,7 @@ class PostTaskCommand : Command {
                 return
             }
 
-            val taskId = "${Clock.System.now().epochSeconds}_${(1000..9999).random()}"
+            val taskId = "${'$'}{Clock.System.now().epochSeconds}_${'$'}{(1000..9999).random()}"
             println("📝 Creating task with ID: $taskId, Title: \"$titleText\"")
 
             val task = Task(
@@ -80,6 +94,7 @@ class PostTaskCommand : Command {
                 title = titleText,
                 description = descriptionText ?: "No description provided",
                 state = TaskState.PENDING,
+                priority = priorityValue,
                 messageId = null
             )
 
@@ -99,9 +114,9 @@ class PostTaskCommand : Command {
             }
 
         } catch (e: Exception) {
-            println("❌ PostTaskCommand.execute() failed: ${e.message}")
+            println("❌ PostTaskCommand.execute() failed: ${'$'}{e.message}")
             deferredResponse.respond {
-                content = "❌ Failed to create task: ${e.message}"
+                content = "❌ Failed to create task: ${'$'}{e.message}"
             }
         }
     }

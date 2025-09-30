@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.kord:kord-core:0.15.0")
+    implementation("dev.kord:kord-core:0.17.0")
     implementation("io.github.cdimascio:dotenv-kotlin:6.4.1")
     implementation("org.reflections:reflections:0.10.2")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")

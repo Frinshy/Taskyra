@@ -1,9 +1,12 @@
+@file:OptIn(ExperimentalTime::class)
+
 package de.frinshy.utils
 
-import commands.impl.Task
-import commands.impl.TaskManager
-import commands.impl.TaskState
+import de.frinshy.Main
 import de.frinshy.Main.Companion.bot
+import de.frinshy.commands.impl.Task
+import de.frinshy.commands.impl.TaskManager
+import de.frinshy.commands.impl.TaskState
 import de.frinshy.config.BotConfig
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.channel.createMessage
@@ -11,7 +14,7 @@ import dev.kord.core.behavior.edit
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.channel.TextChannel
 import dev.kord.rest.builder.message.embed
-import kotlinx.datetime.Clock
+import kotlin.time.ExperimentalTime
 
 suspend fun updateChannelSummary(guildId: String, taskState: TaskState) {
     try {
@@ -21,7 +24,8 @@ suspend fun updateChannelSummary(guildId: String, taskState: TaskState) {
             TaskState.IN_PROGRESS -> config.inProgressTasksChannelId
             TaskState.COMPLETED -> config.completedTasksChannelId
         }
-        val channel = bot.getChannelOf<TextChannel>(Snowflake(channelId ?: return)) ?: return
+
+        val channel = Main.bot.getChannelOf<TextChannel>(Snowflake(channelId ?: return)) ?: return
         val tasks = TaskManager.getTasksByState(guildId, taskState)
         val (title, colorValue) = when (taskState) {
             TaskState.PENDING -> Pair("📋 Pending Tasks Summary", 0xFFD700)
@@ -44,7 +48,7 @@ suspend fun updateChannelSummary(guildId: String, taskState: TaskState) {
                         this.color = dev.kord.common.Color(colorValue)
                         this.description =
                             "Total ${taskState.name.lowercase().replace("_", " ")} tasks: **${tasks.size}**"
-                        this.timestamp = Clock.System.now()
+                        this.timestamp = kotlin.time.Clock.System.now()
                     }
                 }
             } catch (_: Exception) {
@@ -57,7 +61,7 @@ suspend fun updateChannelSummary(guildId: String, taskState: TaskState) {
                     this.title = title
                     this.color = dev.kord.common.Color(colorValue)
                     this.description = "Total ${taskState.name.lowercase().replace("_", " ")} tasks: **${tasks.size}**"
-                    this.timestamp = Clock.System.now()
+                    this.timestamp = kotlin.time.Clock.System.now()
                 }
             }
             // Update the summary message ID in the correct GuildConfig

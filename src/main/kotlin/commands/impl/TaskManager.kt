@@ -1,4 +1,6 @@
-package commands.impl
+@file:OptIn(ExperimentalTime::class)
+
+package de.frinshy.commands.impl
 
 import de.frinshy.Main
 import de.frinshy.config.BotConfig
@@ -12,7 +14,6 @@ import dev.kord.rest.builder.message.EmbedBuilder
 import dev.kord.rest.builder.message.MessageBuilder
 import dev.kord.rest.builder.message.actionRow
 import dev.kord.rest.builder.message.embed
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -21,6 +22,7 @@ import utils.ButtonRegistry.getButtonByType
 import utils.ButtonType
 import utils.TaskButton
 import java.io.File
+import kotlin.time.ExperimentalTime
 
 @Serializable
 enum class TaskState {
@@ -30,13 +32,21 @@ enum class TaskState {
 }
 
 @Serializable
+enum class Priority {
+    LOW,
+    MEDIUM,
+    HIGH
+}
+
+@Serializable
 data class Task(
     val id: String,
     val title: String,
     val description: String,
     var state: TaskState = TaskState.PENDING,
     var assignedUsers: MutableList<String> = mutableListOf(),
-    var messageId: String? = null,
+    var priority: Priority = Priority.MEDIUM,
+    var messageId: String? = null
 )
 
 object TaskManager {
@@ -125,14 +135,14 @@ object TaskManager {
     fun buildTaskMessage(
         task: Task,
         state: TaskState = task.state,
-        timestamp: Instant = Clock.System.now()
+        timestamp: Instant = kotlin.time.Clock.System.now()
     ): MessageBuilder.() -> Unit = {
         embed {
             this.title = task.title
-            this.color = when (state) {
-                TaskState.PENDING -> Color(0xFFD700)
-                TaskState.IN_PROGRESS -> Color(0xFF8C00)
-                TaskState.COMPLETED -> Color(0x43B581)
+            this.color = when (task.priority) {
+                Priority.LOW -> Color(0x43B581)    // green
+                Priority.MEDIUM -> Color(0xFFD700) // gold
+                Priority.HIGH -> Color(0xFF0000)   // red
             }
             this.description = task.description
             this.timestamp = timestamp
@@ -150,12 +160,12 @@ object TaskManager {
                 TaskState.IN_PROGRESS -> guildConfig.inProgressTasksChannelId
                 TaskState.COMPLETED -> guildConfig.completedTasksChannelId
             } ?: return
-            val channel = Main.bot.getChannelOf<TextChannel>(Snowflake(channelId)) ?: return
+            val channel = de.frinshy.Main.bot.getChannelOf<TextChannel>(Snowflake(channelId)) ?: return
             val message = channel.getMessage(Snowflake(task.messageId!!))
             message.edit {
                 embeds = mutableListOf()
                 components = mutableListOf()
-                buildTaskMessage(task, task.state, Clock.System.now()).invoke(this)
+                buildTaskMessage(task, task.state, kotlin.time.Clock.System.now()).invoke(this)
             }
         } catch (e: Exception) {
             println("❌ Failed to update task embed: ${e.message}")
@@ -163,10 +173,17 @@ object TaskManager {
         }
     }
 
-    fun updateTask(id: String, newTitle: String? = null, newDescription: String? = null) {
+    fun updateTask(
+        id: String,
+        newTitle: String? = null,
+        newDescription: String? = null,
+        newPriority: Priority? = null
+    ) {
         tasks.find { it.id == id }?.let { task ->
             val updatedTask = task.copy(
-                title = newTitle ?: task.title, description = newDescription ?: task.description
+                title = newTitle ?: task.title,
+                description = newDescription ?: task.description,
+                priority = newPriority ?: task.priority
             )
             val index = tasks.indexOf(task)
             tasks[index] = updatedTask
@@ -229,9 +246,22 @@ object TaskManager {
             }
             inline = true
         }
+
+        embedBuilder.field {
+            name = "Priority"
+            value = when (task.priority) {
+                Priority.LOW -> "🟢 Low"
+                Priority.MEDIUM -> "🟡 Medium"
+                Priority.HIGH -> "🔴 High"
+            }
+            inline = true
+        }
+
         embedBuilder.field {
             name = "Task ID"
-            value = "`" + task.id + "`"
+            val shortId = if (task.id.contains("_")) task.id.substringAfterLast("_") else task.id
+            val displayShort = if (shortId.length > 8) shortId.takeLast(8) else shortId
+            value = "`" + displayShort + "`"
             inline = true
         }
         embedBuilder.field {
@@ -254,6 +284,7 @@ object TaskManager {
                 getButtonByType(ButtonType.SELECT_USERS)?.let { buttons.add(it) }
                 getButtonByType(ButtonType.ASSIGN_ME)?.let { buttons.add(it) }
                 getButtonByType(ButtonType.EDIT_TASK)?.let { buttons.add(it) }
+                getButtonByType(ButtonType.CHANGE_PRIORITY)?.let { buttons.add(it) }
             }
 
             TaskState.IN_PROGRESS -> {
@@ -262,6 +293,7 @@ object TaskManager {
                 getButtonByType(ButtonType.SELECT_USERS)?.let { buttons.add(it) }
                 getButtonByType(ButtonType.ASSIGN_ME)?.let { buttons.add(it) }
                 getButtonByType(ButtonType.EDIT_TASK)?.let { buttons.add(it) }
+                getButtonByType(ButtonType.CHANGE_PRIORITY)?.let { buttons.add(it) }
             }
 
             TaskState.COMPLETED -> {

@@ -1,6 +1,6 @@
 package de.frinshy.commands.impl
 
-import commands.impl.TaskState
+import de.frinshy.commands.impl.TaskState
 import de.frinshy.commands.Command
 import de.frinshy.commands.SlashCommand
 import de.frinshy.config.BotConfig
