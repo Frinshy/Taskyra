@@ -1,9 +1,5 @@
 package de.frinshy.commands.impl
 
-import de.frinshy.commands.impl.Task
-import de.frinshy.commands.impl.TaskManager
-import de.frinshy.commands.impl.TaskState
-import de.frinshy.commands.impl.Priority
 import de.frinshy.commands.Command
 import de.frinshy.commands.SlashCommand
 import de.frinshy.config.BotConfig
@@ -14,6 +10,8 @@ import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.event.interaction.ChatInputCommandInteractionCreateEvent
 import dev.kord.rest.builder.interaction.ChatInputCreateBuilder
 import dev.kord.rest.builder.interaction.string
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @SlashCommand(name = "posttask", description = "Post a new task to the pending tasks channel")
 class PostTaskCommand : Command {
@@ -35,6 +33,7 @@ class PostTaskCommand : Command {
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     override suspend fun execute(event: ChatInputCommandInteractionCreateEvent) {
         val interaction = event.interaction
 
@@ -52,7 +51,8 @@ class PostTaskCommand : Command {
         val pendingChannelId = guildConfig.pendingTasksChannelId
         if (pendingChannelId == null) {
             deferredResponse.respond {
-                content = "❌ No pending tasks channel is set. Please use `/settaskchannels` first to configure all task channels."
+                content =
+                    "❌ No pending tasks channel is set. Please use `/settaskchannels` first to configure all task channels."
             }
             return
         }
@@ -86,7 +86,7 @@ class PostTaskCommand : Command {
                 return
             }
 
-            val taskId = "${'$'}{Clock.System.now().epochSeconds}_${'$'}{(1000..9999).random()}"
+            val taskId = "${Clock.System.now().epochSeconds}_${(1000..9999).random()}"
             println("📝 Creating task with ID: $taskId, Title: \"$titleText\"")
 
             val task = Task(

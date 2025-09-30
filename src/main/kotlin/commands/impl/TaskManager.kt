@@ -259,9 +259,7 @@ object TaskManager {
 
         embedBuilder.field {
             name = "Task ID"
-            val shortId = if (task.id.contains("_")) task.id.substringAfterLast("_") else task.id
-            val displayShort = if (shortId.length > 8) shortId.takeLast(8) else shortId
-            value = "`" + displayShort + "`"
+            value = "`" + task.id + "`"
             inline = true
         }
         embedBuilder.field {
