@@ -7,8 +7,10 @@ directly within your Discord server. Perfect for project-related collaboration!
 
 ## Features
 
-- Create, assign and update tasks
+- Create, assign and update tasks with priority levels
+- Set task priorities (Low, Medium, High) when creating or editing tasks
 - Easily manage a task with buttons so you don't need to remember commands
+- Visual priority indicators with emoji support
 - Easily deploy your own instance with Docker and Docker Compose
 
 ## Getting Started
@@ -49,6 +51,15 @@ You can use the official Taskyra bot without self-hosting. Simply invite it to y
 - `/posttask` - Create a new task.
 - `/settaskchannels` - Configure which channels Taskyra uses.
 
+### Task Priorities
+
+Tasks can be assigned one of three priority levels:
+- 🔴 **High** - Urgent tasks that need immediate attention
+- 🟡 **Medium** - Default priority for standard tasks  
+- 🟢 **Low** - Non-urgent tasks that can be done when time allows
+
+You can set the priority when creating a task using `/posttask` or change it later using the task buttons.
+
 ### Buttons
 
 - `Start` - Put a task in the inprogress category.
@@ -57,6 +68,7 @@ You can use the official Taskyra bot without self-hosting. Simply invite it to y
 - `Assign/Unassign Me` - Assign or unassign yourself to/from the task.
 - `Assign User` - Assign a user to the task using a modal.
 - `Edit Task` - Edit the task name and description using a modal.
+- `Priority` - Change the task priority using a dropdown menu.
 
 ### Showcase
 
